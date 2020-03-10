@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">FacebookSignIn-Demo</string>
+
+    <string name="facebook_app_id">2668587536695558</string>
+    <string name="fb_login_protocol_scheme">fb2668587536695558</string>
+
+    <string name="a0_domain">brucke.auth0.com</string>
+    <string name="a0_app_id">0g9Fqy1KgICzLVQeop62NnP717eJicrN</string>
+</resources>
