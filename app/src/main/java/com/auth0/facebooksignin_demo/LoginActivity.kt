@@ -8,46 +8,54 @@ import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.GraphRequest
+import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import kotlinx.android.synthetic.main.activity_login.*
 
 
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var callbackManager: CallbackManager
+    companion object {
+        private val TAG = LoginActivity::class.simpleName
+        private const val FACEBOOK_PERMISSIONS = "email"
+    }
+
+    private lateinit var fbCallbackManager: CallbackManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        LoginManager.getInstance().logOut()
         setContentView(R.layout.activity_login)
-        callbackManager = CallbackManager.Factory.create()
+        fbCallbackManager = CallbackManager.Factory.create()
 
         with(login_button) {
-            setPermissions("email")
-            registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
-                override fun onSuccess(result: LoginResult?) {
-                    result?.accessToken?.let { accessToken ->
-                        Log.e("Login", "Access Token: $accessToken")
+            setPermissions(FACEBOOK_PERMISSIONS)
+            registerCallback(fbCallbackManager, object : FacebookCallback<LoginResult> {
+                override fun onSuccess(result: LoginResult) {
+                    result.accessToken.let { accessToken ->
                         fetchSessionToken(accessToken.token) { sessionToken ->
-                            fetchUserProfile(accessToken.token, accessToken.userId) { userProfile ->
+                            sessionToken?.let {
+                                fetchUserProfile(accessToken.token, accessToken.userId) { profile ->
+                                }
                             }
                         }
-
                     }
                 }
 
                 override fun onCancel() {
+                    Log.i(TAG, "Facebook sign-in cancelled")
                 }
 
-                override fun onError(error: FacebookException?) {
-                    TODO("Not yet implemented")
+                override fun onError(error: FacebookException) {
+                    Log.e(TAG, "Error ${error.message}")
                 }
             })
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        callbackManager.onActivityResult(requestCode, resultCode, data)
+        fbCallbackManager.onActivityResult(requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
     }
 
@@ -63,12 +71,11 @@ class LoginActivity : AppCompatActivity() {
         request.graphPath = "oauth/access_token"
         request.callback = GraphRequest.Callback { response ->
             if (response.error != null) {
-                // TODO Handle errors
+                Log.e(TAG, "Failed to fetch session token. ${response.error.errorMessage}")
                 callback.invoke(null)
                 return@Callback
             }
             val fbSessionToken = response.jsonObject.getString("access_token")
-            Log.e("Login", "Session token: $fbSessionToken")
             callback.invoke(fbSessionToken)
         }
         request.executeAsync()
@@ -84,15 +91,12 @@ class LoginActivity : AppCompatActivity() {
         request.graphPath = userId
         request.callback = GraphRequest.Callback { response ->
             if (response.error != null) {
-                // TODO Handle errors
+                Log.w(TAG, "Failed to fetch user profile: ${response.error.errorMessage}")
                 callback.invoke(null)
                 return@Callback
             }
-            val fbSessionToken = response.jsonObject
-            Log.e("Login", "Session token: $fbSessionToken")
-            callback.invoke(fbSessionToken.toString())
+            callback.invoke(response.rawResponse)
         }
-
         request.executeAsync()
     }
 
