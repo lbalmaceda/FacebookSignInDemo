@@ -13,7 +13,6 @@ import com.facebook.CallbackManager
 import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.GraphRequest
-import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
 import kotlinx.android.synthetic.main.activity_login.*
 
@@ -24,7 +23,7 @@ class LoginActivity : AppCompatActivity() {
         private val TAG = LoginActivity::class.simpleName
         private const val FACEBOOK_SUBJECT_TOKEN_TYPE =
             "http://auth0.com/oauth/token-type/facebook-info-session-access-token"
-        private const val FACEBOOK_PERMISSIONS = "email"
+        private val FACEBOOK_PERMISSIONS = listOf("public_profile", "email")
         private const val AUTH0_SCOPE = "openid email profile offline_access"
     }
 
@@ -37,7 +36,6 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        LoginManager.getInstance().logOut()
         setContentView(R.layout.activity_login)
         fbCallbackManager = CallbackManager.Factory.create()
 
